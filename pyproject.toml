@@ -1,0 +1,14 @@
+[project]
+name = "lpnu-ml-labs"
+version = "0.1.0"
+description = "Project contains labs for the Machine Learning course at Lviv Polytechnic National University."
+readme = "README.md"
+authors = [
+    { name = "Andrii Holovko", email = "andriy.holovko@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
