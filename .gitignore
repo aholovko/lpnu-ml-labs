@@ -12,6 +12,8 @@ wheels/
 # IDE
 .idea/
 
-# Project-specific folders
+# Project-specific artifacts
 data/
 models/
+*.png
+*.txt

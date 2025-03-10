@@ -3,109 +3,11 @@ import torch
 import torch.nn as nn
 import numpy as np
 import matplotlib.pyplot as plt
-import torchvision
-from torchvision import transforms
-from torch.utils.data import DataLoader, Subset
-from typing import List
+import argparse
+from typing import Tuple, List
 
-
-class MNISTDataModule:
-    def __init__(self, data_dir="./data", batch_size=64, valid_size=10000):
-        self.test_dataset = None
-        self.train_dataset = None
-        self.valid_dataset = None
-        self.data_dir = data_dir
-        self.batch_size = batch_size
-        self.valid_size = valid_size
-        self.transform = transforms.Compose([transforms.ToTensor()])
-
-    def prepare_data(self):
-        torchvision.datasets.MNIST(root=self.data_dir, train=True, download=True)
-        torchvision.datasets.MNIST(root=self.data_dir, train=False, download=True)
-
-    def setup(self):
-        # Load training data and split into train/validation
-        mnist_full = torchvision.datasets.MNIST(
-            root=self.data_dir, train=True, transform=self.transform
-        )
-
-        # Split into validation and training datasets
-        valid_indices: List[int] = torch.arange(self.valid_size).tolist()
-        train_indices: List[int] = torch.arange(
-            self.valid_size, len(mnist_full)
-        ).tolist()
-
-        self.valid_dataset = Subset(mnist_full, valid_indices)
-        self.train_dataset = Subset(mnist_full, train_indices)
-
-        # Load test dataset
-        self.test_dataset = torchvision.datasets.MNIST(
-            root=self.data_dir, train=False, transform=self.transform
-        )
-
-    def train_dataloader(self, shuffle=True):
-        if self.train_dataset is None:
-            raise ValueError("Dataset not set up. Call setup() first.")
-
-        return DataLoader(
-            self.train_dataset, batch_size=self.batch_size, shuffle=shuffle
-        )
-
-    def val_dataloader(self):
-        if self.valid_dataset is None:
-            raise ValueError("Dataset not set up. Call setup() first.")
-
-        return DataLoader(self.valid_dataset, batch_size=self.batch_size, shuffle=False)
-
-    def test_dataloader(self):
-        if self.test_dataset is None:
-            raise ValueError("Dataset not set up. Call setup() first.")
-
-        return DataLoader(self.test_dataset, batch_size=self.batch_size, shuffle=False)
-
-
-class CNN(nn.Module):
-    def __init__(self, dropout_rate=0.5):
-        super(CNN, self).__init__()
-
-        # First convolutional block
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=5, padding=2)
-        self.relu1 = nn.ReLU()
-        self.pool1 = nn.MaxPool2d(kernel_size=2)
-
-        # Second convolutional block
-        self.conv2 = nn.Conv2d(
-            in_channels=32, out_channels=64, kernel_size=5, padding=2
-        )
-        self.relu2 = nn.ReLU()
-        self.pool2 = nn.MaxPool2d(kernel_size=2)
-
-        # Fully connected layers
-        self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(3136, 1024)
-        self.relu3 = nn.ReLU()
-        self.dropout = nn.Dropout(p=dropout_rate)
-        self.fc2 = nn.Linear(1024, 10)
-
-    def forward(self, x):
-        # First block
-        x = self.conv1(x)
-        x = self.relu1(x)
-        x = self.pool1(x)
-
-        # Second block
-        x = self.conv2(x)
-        x = self.relu2(x)
-        x = self.pool2(x)
-
-        # Fully connected layers
-        x = self.flatten(x)
-        x = self.fc1(x)
-        x = self.relu3(x)
-        x = self.dropout(x)
-        x = self.fc2(x)
-
-        return x
+from src.lab1.dataloader import MNISTDataModule
+from src.lab1.model import CNN
 
 
 class Trainer:
@@ -124,7 +26,20 @@ class Trainer:
             optimizer if optimizer else torch.optim.Adam(model.parameters(), lr=0.001)
         )
 
-    def train(self, num_epochs, train_dl, valid_dl):
+    def train(
+        self, num_epochs, train_dl, valid_dl
+    ) -> Tuple[List[float], List[float], List[float], List[float]]:
+        """
+        Train the model for the specified number of epochs.
+
+        Args:
+            num_epochs: Number of epochs to train for
+            train_dl: Training data loader
+            valid_dl: Validation data loader
+
+        Returns:
+            A tuple containing (train_loss_history, val_loss_history, train_acc_history, val_acc_history)
+        """
         loss_hist_train = [0] * num_epochs
         accuracy_hist_train = [0] * num_epochs
         loss_hist_valid = [0] * num_epochs
@@ -186,20 +101,8 @@ class Trainer:
             accuracy_hist_valid,
         )
 
-    def evaluate(self, test_dataset):
-        self.model.eval()
-        self.model = self.model.cpu()  # Move model to CPU for inference
-
-        # Get predictions for the entire test dataset
-        with torch.no_grad():
-            pred = self.model(test_dataset.data.unsqueeze(1) / 255.0)
-            is_correct = (torch.argmax(pred, dim=1) == test_dataset.targets).float()
-            test_accuracy = is_correct.mean().item()
-
-        print(f"Test accuracy: {test_accuracy:.4f}")
-        return test_accuracy
-
     def save_model(self, path="models/mnist-cnn.pt"):
+        """Save the trained model to the specified path."""
         # Create the directory if it doesn't exist
         os.makedirs(os.path.dirname(path), exist_ok=True)
 
@@ -209,6 +112,13 @@ class Trainer:
 
 
 def plot_training_history(hist, save_path=None):
+    """
+    Plot the training history.
+
+    Args:
+        hist: A tuple containing (train_loss_history, val_loss_history, train_acc_history, val_acc_history)
+        save_path: Optional path to save the plot to
+    """
     x_arr = np.arange(len(hist[0])) + 1
 
     fig = plt.figure(figsize=(12, 4))
@@ -232,16 +142,69 @@ def plot_training_history(hist, save_path=None):
     # Save the figure if a path is provided
     if save_path:
         plt.savefig(save_path)
+        print(f"Training history plot saved to {save_path}")
 
     plt.show()
 
 
-def main():
+def parse_args():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(description="Train a CNN model on MNIST dataset")
+
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=64,
+        help="batch size for training (default: 64)",
+    )
+    parser.add_argument(
+        "--epochs", type=int, default=5, help="number of epochs to train (default: 5)"
+    )
+    parser.add_argument(
+        "--lr", type=float, default=0.001, help="learning rate (default: 0.001)"
+    )
+    parser.add_argument(
+        "--dropout", type=float, default=0.5, help="dropout rate (default: 0.5)"
+    )
+    parser.add_argument(
+        "--data-dir",
+        type=str,
+        default="./data",
+        help="directory to store the dataset (default: ./data)",
+    )
+    parser.add_argument(
+        "--model-path",
+        type=str,
+        default="models/mnist-cnn.pt",
+        help="path to save the model (default: models/mnist-cnn.pt)",
+    )
+    parser.add_argument(
+        "--plot-path",
+        type=str,
+        default="training_history.png",
+        help="path to save the training history plot (default: training_history.png)",
+    )
+    parser.add_argument(
+        "--valid-size",
+        type=int,
+        default=10000,
+        help="size of validation dataset (default: 10000)",
+    )
+    parser.add_argument("--seed", type=int, default=1, help="random seed (default: 1)")
+
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    args = parse_args()
+
     # Set random seed for reproducibility
-    torch.manual_seed(1)
+    torch.manual_seed(args.seed)
 
     # Initialize the data module
-    data_module = MNISTDataModule(batch_size=64)
+    data_module = MNISTDataModule(
+        data_dir=args.data_dir, batch_size=args.batch_size, valid_size=args.valid_size
+    )
     data_module.prepare_data()
     data_module.setup()
 
@@ -250,26 +213,20 @@ def main():
     valid_dl = data_module.val_dataloader()
 
     # Create the model
-    model = CNN(dropout_rate=0.5)
+    model = CNN(dropout_rate=args.dropout)
 
-    # Initialize trainer
-    trainer = Trainer(model)
+    # Initialize trainer with custom learning rate if provided
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    trainer = Trainer(model, optimizer=optimizer)
 
     # Train the model
-    num_epochs = 5
-    hist = trainer.train(num_epochs, train_dl, valid_dl)
+    print(f"Starting training for {args.epochs} epochs...")
+    hist = trainer.train(args.epochs, train_dl, valid_dl)
 
     # Plot training history
-    plot_training_history(hist)
-
-    # Evaluate on test set
-    test_accuracy = trainer.evaluate(data_module.test_dataset)
+    plot_training_history(hist, save_path=args.plot_path)
 
     # Save the model
-    trainer.save_model()
+    trainer.save_model(path=args.model_path)
 
-    return model, hist, test_accuracy
-
-
-if __name__ == "__main__":
-    main()
+    print("Training completed successfully!")
