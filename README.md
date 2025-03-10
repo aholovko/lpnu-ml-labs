@@ -21,3 +21,11 @@ uv sync
 source .venv/bin/activate  # On Unix/macOS
 .venv\Scripts\activate     # On Windows
 ```
+
+### 3. Run model training
+
+Start the model training by running:
+
+```sh
+make train
+```
