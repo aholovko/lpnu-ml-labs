@@ -1,41 +1,29 @@
-.PHONY: train evaluate clean
+.PHONY: train evaluate predict test
 
-BATCH_SIZE ?= 64
 EPOCHS ?= 5
-LR ?= 0.001
-DROPOUT ?= 0.5
-DATA_DIR ?= ./data
-MODEL_PATH ?= models/mnist-cnn.pt
-PLOT_PATH ?= training_history.png
-SEED ?= 1
-DEVICE ?= 
+LEARNING_RATE ?= 0.001
+DEVICE ?= auto
+MODEL_NAME ?=
+IMAGE_PATH ?=
 
-# Train the model
 train:
-	@echo "Training CNN model on MNIST dataset..."
-	@uv run -m lab1.train \
-		--batch-size $(BATCH_SIZE) \
+	@uv run -m src.lab1.modeling.train \
 		--epochs $(EPOCHS) \
-		--lr $(LR) \
-		--dropout $(DROPOUT) \
-		--data-dir $(DATA_DIR) \
-		--model-path $(MODEL_PATH) \
-		--plot-path $(PLOT_PATH) \
-		--seed $(SEED)
+		--lr $(LEARNING_RATE) \
+		$(if $(filter-out auto,$(DEVICE)),--device $(DEVICE),)
 
-# Evaluate the trained model
 evaluate:
-	@echo "Evaluating CNN model on MNIST test dataset..."
-	@uv run -m lab1.evaluate \
-		--batch-size $(BATCH_SIZE) \
-		--data-dir $(DATA_DIR) \
-		--model-path $(MODEL_PATH) \
-		--output-file evaluation_results.txt \
-		--seed $(SEED) \
-		$(if $(DEVICE),--device $(DEVICE),)
+	@uv run -m src.lab1.modeling.evaluate \
+		--model-name $(MODEL_NAME) \
+		$(if $(filter-out auto,$(DEVICE)),--device $(DEVICE),)
 
-# Clean up generated files
-clean:
-	@echo "Cleaning up generated files..."
-	@rm -f $(PLOT_PATH) evaluation_results.txt
-	@rm -f $(MODEL_PATH)
+predict:
+	@uv run -m src.lab1.modeling.predict \
+		--model-name $(MODEL_NAME) \
+		--image-path $(IMAGE_PATH) \
+		$(if $(filter-out auto,$(DEVICE)),--device $(DEVICE),)
+
+# Run tests
+test:
+	@echo "Running tests..."
+	@uv run pytest tests/ -v
