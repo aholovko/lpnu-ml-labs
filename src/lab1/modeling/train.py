@@ -13,7 +13,7 @@ import datetime
 from typing import Tuple, List
 from pathlib import Path
 
-from src.lab1.dataset import MNISTDataModule
+from src.lab1.dataset_mnist import MNISTDataModule
 from src.lab1.modeling.model import ConvNet
 from src.lab1.features import extract_features
 from src.lab1.utils import get_device, set_seed
