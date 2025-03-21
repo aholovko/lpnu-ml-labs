@@ -12,6 +12,9 @@ wheels/
 # IDE
 .idea/
 
+# Ruff stuff
+.ruff_cache/
+
 # Project-specific artifacts
 data/
 models/

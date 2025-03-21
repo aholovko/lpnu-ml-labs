@@ -34,13 +34,9 @@ class Trainer:
         self.device = get_device(device)
         self.model = model.to(self.device)
         self.loss_fn = loss_fn or nn.CrossEntropyLoss()
-        self.optimizer = optimizer or torch.optim.Adam(
-            model.parameters(), lr=LEARNING_RATE
-        )
+        self.optimizer = optimizer or torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
-    def train(
-        self, num_epochs, train_dl, valid_dl
-    ) -> Tuple[List[float], List[float], List[float], List[float]]:
+    def train(self, num_epochs, train_dl, valid_dl) -> Tuple[List[float], List[float], List[float], List[float]]:
         print(f"Using device: {self.device}")
 
         train_losses, valid_losses = [], []
@@ -144,9 +140,7 @@ def parse_args():
         default=LEARNING_RATE,
         help=f"learning rate (default: {LEARNING_RATE})",
     )
-    parser.add_argument(
-        "--device", type=str, default=None, help="device to use (default: auto)"
-    )
+    parser.add_argument("--device", type=str, default=None, help="device to use (default: auto)")
     return parser.parse_args()
 
 
@@ -163,9 +157,7 @@ def main():
     trainer = Trainer(model, optimizer=optimizer, device=args.device)
 
     print(f"Starting training for {args.epochs} epochs...")
-    history = trainer.train(
-        args.epochs, data_module.train_dataloader(), data_module.val_dataloader()
-    )
+    history = trainer.train(args.epochs, data_module.train_dataloader(), data_module.val_dataloader())
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     model_path = os.path.join(MODELS_DIR, f"mnist_classifier_{timestamp}.pt")

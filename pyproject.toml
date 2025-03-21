@@ -27,3 +27,13 @@ dev = [
     "pytest-cov>=6.0.0",
     "ruff>=0.9.10",
 ]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.pyright]
+exclude = [".venv"]
+pythonVersion = "3.12"
+venvPath = "."
+venv = ".venv"
