@@ -20,9 +20,7 @@ class ConvNet(nn.Module):
         self.pool = nn.MaxPool2d(kernel_size=2)
 
         # Second convolutional block
-        self.conv2 = nn.Conv2d(
-            in_channels=32, out_channels=64, kernel_size=5, padding=2
-        )
+        self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=5, padding=2)
 
         # Fully connected layers
         self.fc1 = nn.Linear(64 * 7 * 7, 1024)  # 64 channels after 2 pooling layers

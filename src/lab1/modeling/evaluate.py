@@ -21,9 +21,7 @@ class ModelEvaluator:
         self.model_path = Path(MODELS_DIR) / f"{model_name}.pt"
         self.device = get_device(device)
         self.model = None
-        self.data_module = MNISTDataModule(
-            data_dir=Path(DATA_DIR), batch_size=BATCH_SIZE
-        )
+        self.data_module = MNISTDataModule(data_dir=Path(DATA_DIR), batch_size=BATCH_SIZE)
 
         reports_dir = Path(REPORTS_DIR)
         reports_dir.mkdir(parents=True, exist_ok=True)
@@ -31,9 +29,7 @@ class ModelEvaluator:
 
     def load_model(self) -> None:
         if not self.model_path.exists():
-            raise FileNotFoundError(
-                f"Model '{self.model_name}' not found at {self.model_path}"
-            )
+            raise FileNotFoundError(f"Model '{self.model_name}' not found at {self.model_path}")
 
         self.model = torch.load(self.model_path)
         print(f"Loaded model '{self.model_name}'")
@@ -100,9 +96,7 @@ def parse_args():
         required=True,
         help="name of the model to evaluate (without extension)",
     )
-    parser.add_argument(
-        "--device", type=str, default=None, help="device to use (default: auto)"
-    )
+    parser.add_argument("--device", type=str, default=None, help="device to use (default: auto)")
 
     return parser.parse_args()
 

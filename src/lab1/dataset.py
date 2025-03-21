@@ -43,30 +43,22 @@ class BaseDataModule:
             raise NotImplementedError("dataset_class cannot be None")
 
         # Load and split training data
-        full_dataset = self.dataset_class(
-            root=self.data_dir, train=True, transform=self.transform, **kwargs
-        )
+        full_dataset = self.dataset_class(root=self.data_dir, train=True, transform=self.transform, **kwargs)
 
         # Create validation and training splits
         valid_indices: List[int] = torch.arange(self.valid_size).tolist()
-        train_indices: List[int] = torch.arange(
-            self.valid_size, len(full_dataset)
-        ).tolist()
+        train_indices: List[int] = torch.arange(self.valid_size, len(full_dataset)).tolist()
 
         self.valid_dataset = Subset(full_dataset, valid_indices)
         self.train_dataset = Subset(full_dataset, train_indices)
 
         # Load test dataset
-        self.test_dataset = self.dataset_class(
-            root=self.data_dir, train=False, transform=self.transform, **kwargs
-        )
+        self.test_dataset = self.dataset_class(root=self.data_dir, train=False, transform=self.transform, **kwargs)
 
     def train_dataloader(self, shuffle: bool = True) -> DataLoader:
         if self.train_dataset is None:
             raise ValueError("Call setup() before accessing dataloaders")
-        return DataLoader(
-            self.train_dataset, batch_size=self.batch_size, shuffle=shuffle
-        )
+        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=shuffle)
 
     def val_dataloader(self) -> DataLoader:
         if self.valid_dataset is None:
@@ -104,12 +96,8 @@ class EMNISTDataModule(BaseDataModule):
         if self.dataset_class is None:
             raise NotImplementedError("dataset_class cannot be None")
 
-        self.dataset_class(
-            root=self.data_dir, split=self.split, train=True, download=True
-        )
-        self.dataset_class(
-            root=self.data_dir, split=self.split, train=False, download=True
-        )
+        self.dataset_class(root=self.data_dir, split=self.split, train=True, download=True)
+        self.dataset_class(root=self.data_dir, split=self.split, train=False, download=True)
 
     def setup(self, **kwargs: Any) -> None:
         super().setup(split=self.split, **kwargs)

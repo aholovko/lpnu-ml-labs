@@ -86,9 +86,7 @@ def predict(model_path, image_path, device=None):
 
 def main():
     parser = argparse.ArgumentParser(description="Predict digits from images")
-    parser.add_argument(
-        "--model-name", required=True, help="model filename (without extension)"
-    )
+    parser.add_argument("--model-name", required=True, help="model filename (without extension)")
     parser.add_argument("--image-path", required=True, help="path to the image")
     parser.add_argument("--device", default=None, help="device for inference")
     args = parser.parse_args()
