@@ -9,7 +9,7 @@ from typing import Optional
 
 import torch
 
-from src.lab1.dataset import MNISTDataModule
+from src.lab1.dataset_mnist import MNISTDataModule
 from src.lab1.features import extract_features
 from src.lab1.utils import get_device, set_seed
 from src.lab1.config import MODELS_DIR, DATA_DIR, BATCH_SIZE, SEED, REPORTS_DIR
