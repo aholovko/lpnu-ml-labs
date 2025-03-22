@@ -2,13 +2,14 @@
 Unit tests for the MNIST DataModule.
 """
 
+from pathlib import Path
+
 import pytest
 import torch
-from pathlib import Path
 from torch.utils.data import DataLoader, RandomSampler
 
+from src.lab1.config import BATCH_SIZE, DATA_DIR, VALID_SIZE
 from src.lab1.dataset_mnist import MNISTDataModule
-from src.lab1.config import DATA_DIR, BATCH_SIZE, VALID_SIZE
 
 
 @pytest.fixture(scope="module")

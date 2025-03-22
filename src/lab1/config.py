@@ -2,19 +2,17 @@
 Configuration file for the Lab1 project.
 """
 
-# Data parameters
+# Dataset
 VALID_SIZE = 10000
 BATCH_SIZE = 64
 
-# Model parameters
-DROPOUT_RATE = 0.5
-
-# Training parameters
-LEARNING_RATE = 0.001
-SEED = 16
+# Model and training parameters
 EPOCHS = 5
+LEARNING_RATE = 0.001
+DROPOUT_RATE = 0.5
+SEED = 42
 
-# Paths
+# Environment
 DATA_DIR = "./data"
 MODELS_DIR = "./models"
 REPORTS_DIR = "./reports"

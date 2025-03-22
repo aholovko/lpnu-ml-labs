@@ -18,5 +18,4 @@ wheels/
 # Project-specific artifacts
 data/
 models/
-*.png
-*.txt
+reports/

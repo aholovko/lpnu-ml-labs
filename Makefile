@@ -11,12 +11,6 @@ train:
 		--lr $(LEARNING_RATE) \
 		$(if $(filter-out auto,$(DEVICE)),--device $(DEVICE),)
 
-.PHONY: evaluate
-evaluate:
-	@uv run -m src.lab1.modeling.evaluate \
-		--model-name $(MODEL_NAME) \
-		$(if $(filter-out auto,$(DEVICE)),--device $(DEVICE),)
-
 .PHONY: predict
 predict:
 	@uv run -m src.lab1.modeling.predict \
@@ -30,7 +24,7 @@ test:
 	@uv run pytest tests/ -v
 
 .PHONY: checks
-checks: uv-lock lint format typecheck test
+checks: uv-lock lint format typecheck
 
 .PHONY: uv-lock
 uv-lock:

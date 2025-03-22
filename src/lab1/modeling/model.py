@@ -4,6 +4,7 @@ Module containing model architecture for MNIST classification.
 
 import torch.nn as nn
 import torch.nn.functional as F
+
 from src.lab1.config import DROPOUT_RATE
 
 

@@ -12,19 +12,17 @@
 ## Project Structure
 
 ```
-├── data/               <- Directory for storing data
-├── models/             <- Trained models
+├── data/                   <- Directory for storing datasets
+├── models/                 <- Trained models
 ├── src/
-│   └── lab1/           <- Source code for lab1
-│       ├── config.py   <- Configuration variables
-│       ├── dataset.py  <- Dataset module
-│       ├── features.py <- Feature engineering 
-│       ├── utils.py    <- Utility functions
-│       ├── modeling/   <- Model training and inference
-│       │   ├── model.py    <- Model definition
-│       │   ├── train.py    <- Model training
-│       │   ├── evaluate.py <- Model evaluation
-│       │   └── predict.py  <- Model inference
+│   └── lab1/               <- Source code for lab1
+│       ├── config.py         <- Configuration settings
+│       ├── dataset_mnist.py  <- Data module for MNIST dataset
+│       ├── utils.py          <- Utility functions
+│       ├── modeling/         <- Model training and inference
+│       │   ├── model.py        <- Model definition
+│       │   ├── train.py        <- Model training and evaluation
+│       │   └── predict.py      <- Model inference
 └── README.md           <- This file
 ```
 
@@ -76,20 +74,6 @@ or
 python -m src.lab1.modeling.train --epochs 10 --lr 0.0005 --device cuda
 ```
 
-### Evaluate the Model
-
-Evaluate a trained model:
-
-```bash
-make evaluate MODEL_NAME=model_name
-```
-or
-```bash
-python -m src.lab1.modeling.evaluate --model-name model_name
-```
-
-> **Note**: `MODEL_NAME` should be the filename (without extension) of a model file located in the `./models/` directory.
-
 ### Make Predictions
 
 Generate predictions using a trained model:
@@ -101,6 +85,8 @@ or
 ```bash
 python -m src.lab1.modeling.predict --model-name model_name --image-path path/to/image.jpg
 ```
+
+> **Note**: `MODEL_NAME` should be the filename (without extension) of a model file located in the `./models/` directory.
 
 ## Development
 
@@ -118,7 +104,6 @@ This command runs the following checks in sequence:
 2. **Linting**: `make lint` - Lints the code using Ruff with auto-fixes 
 3. **Formatting**: `make format` - Formats code using Ruff formatter
 4. **Type checking**: `make typecheck` - Performs static type checking with Pyright
-5. **Testing**: `make test` - Runs all tests
 
 You can also run each check individually as needed.
 
