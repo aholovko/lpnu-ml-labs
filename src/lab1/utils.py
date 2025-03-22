@@ -1,36 +1,43 @@
 """
-Utility functions for the MNIST CNN project.
+Utility functions for Lab1 project.
 """
 
-import os
-import torch
-import numpy as np
+import logging
+import random
 from typing import Optional
+
+import numpy as np
+import torch
+
+logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
+logger = logging.getLogger(__name__)
 
 
 def set_seed(seed: int) -> None:
     """Set random seed for reproducibility."""
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
+
+    random.seed(seed)
     np.random.seed(seed)
+    torch.manual_seed(seed)
+
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
 
 
 def get_device(device_str: Optional[str] = None) -> torch.device:
-    if device_str:
-        return torch.device(device_str)
+    """Get the appropriate PyTorch device."""
 
-    # Check for CUDA
+    if device_str:
+        try:
+            return torch.device(device_str)
+        except (RuntimeError, ValueError) as e:
+            logger.warning(f"Requested device '{device_str}' not available: {str(e)}")
+            logger.warning("Falling back to auto-detection")
+
     if torch.cuda.is_available():
         return torch.device("cuda")
-
-    # Check for MPS (Apple Silicon)
-    if hasattr(torch, "mps") and torch.mps.is_available():
+    elif hasattr(torch, "mps") and torch.mps.is_available():
         return torch.device("mps")
-
-    # Fall back to CPU
-    return torch.device("cpu")
-
-
-def ensure_dir_exists(directory: str) -> None:
-    os.makedirs(directory, exist_ok=True)
+    else:
+        return torch.device("cpu")
