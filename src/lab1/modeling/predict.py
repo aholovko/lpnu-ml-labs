@@ -7,10 +7,10 @@ import logging
 from pathlib import Path
 from typing import Tuple
 
+import cv2
+import numpy as np
 import torch
 import torch.nn.functional as F
-import torchvision.transforms as transforms
-from PIL import Image, ImageOps
 
 from src.lab1.config import MODELS_DIR
 from src.lab1.modeling.model import ConvNet
@@ -48,20 +48,18 @@ def load_image(image_path: Path, device: torch.device) -> torch.Tensor:
     """Load and preprocess an image for model inference."""
 
     try:
-        image = ImageOps.grayscale(Image.open(image_path))
+        image = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
     except FileNotFoundError:
         logger.error(f"Image not found: {image_path}")
         raise
 
-    transform = transforms.Compose(
-        [
-            transforms.Resize((28, 28)),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.1307], std=[0.3081]),
-        ]
-    )
+    image = cv2.resize(image, (28, 28), interpolation=cv2.INTER_LANCZOS4)
+    image = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 7)
+    image = cv2.bitwise_not(image)
+    image = image.astype(np.float32) / 255.0
 
-    tensor_image: torch.Tensor = torch.as_tensor(transform(image))
+    tensor_image = torch.from_numpy(image).float()
+
     return tensor_image.unsqueeze(0).to(device)
 
 
