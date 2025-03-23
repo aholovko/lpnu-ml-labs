@@ -20,21 +20,10 @@ logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
 
-def predict(model, image_tensor) -> Tuple[int, float]:
-    """Make a prediction with the trained model."""
-
-    with torch.no_grad():
-        outputs = model(image_tensor)
-        predicted_class = int(torch.argmax(outputs, dim=1).item())
-        confidence = float(F.softmax(outputs, dim=1)[0][predicted_class].item())
-
-    return predicted_class, confidence
-
-
-def load_model(model_path: Path, device: torch.device):
+def load_model(model_path: str, device: torch.device) -> torch.nn.Module:
     """Load a trained model from disk."""
 
-    if not model_path.exists():
+    if not Path(model_path).exists():
         raise FileNotFoundError(f"Model not found: {model_path}")
 
     model = ConvNet()
@@ -44,26 +33,49 @@ def load_model(model_path: Path, device: torch.device):
     return model
 
 
-def load_image(image_path: Path, device: torch.device) -> torch.Tensor:
-    """Load and preprocess an image for model inference."""
+def load_image(image_path: str) -> np.ndarray:
+    """Load an image from disk."""
 
     try:
-        image = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
-    except FileNotFoundError:
-        logger.error(f"Image not found: {image_path}")
+        image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+        if image is None:
+            raise FileNotFoundError(f"Image not found or could not be read: {image_path}")
+        return image
+    except Exception as e:
+        logger.error(f"Error loading image {image_path}: {e}")
         raise
 
-    image = cv2.resize(image, (28, 28), interpolation=cv2.INTER_LANCZOS4)
-    image = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 7)
+
+def preprocess_image(image: np.ndarray, device: torch.device) -> torch.Tensor:
+    """Preprocess an image for model inference."""
+
+    image_size = (28, 28)
+    threshold_block_size = 11
+    threshold_c = 7
+
+    image = cv2.resize(image, image_size, interpolation=cv2.INTER_LANCZOS4)
+    image = cv2.adaptiveThreshold(
+        image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, threshold_block_size, threshold_c
+    )
     image = cv2.bitwise_not(image)
     image = image.astype(np.float32) / 255.0
 
-    tensor_image = torch.from_numpy(image).float()
+    x_tensor = torch.from_numpy(image).float()
+    return x_tensor.unsqueeze(0).to(device)
 
-    return tensor_image.unsqueeze(0).to(device)
+
+def predict(model: torch.nn.Module, x: torch.Tensor) -> Tuple[int, float]:
+    """Make a prediction with the trained model."""
+
+    with torch.no_grad():
+        logits = model(x)
+        y_pred = int(torch.argmax(logits, dim=1).item())
+        prob = float(F.softmax(logits, dim=1)[0][y_pred].item())
+
+    return y_pred, prob
 
 
-def main():
+def main() -> None:
     """Run handwriting prediction."""
 
     parser = argparse.ArgumentParser(description="Predict handwriting")
@@ -73,13 +85,14 @@ def main():
     args = parser.parse_args()
 
     device = get_device(args.device)
-    model_path = Path(MODELS_DIR) / f"{args.model_name}.pt"
-
+    model_path = str(Path(MODELS_DIR) / f"{args.model_name}.pt")
     model = load_model(model_path, device)
-    image_tensor = load_image(Path(args.image_path), device)
-    predicted_class, confidence = predict(model, image_tensor)
 
-    logger.info(f'"{predicted_class}" (confidence: {confidence * 100:.1f}%)')
+    image = load_image(args.image_path)
+    x = preprocess_image(image, device)
+
+    y_pred, prob = predict(model, x)
+    logger.info(f'Predicted: "{y_pred}" (probability: {prob * 100:.1f}%)')
 
 
 if __name__ == "__main__":
