@@ -37,7 +37,7 @@ def get_device(device_str: Optional[str] = None) -> torch.device:
 
     if torch.cuda.is_available():
         return torch.device("cuda")
-    elif hasattr(torch, "mps") and torch.mps.is_available():
+    elif hasattr(torch, "mps") and hasattr(torch.mps, "is_available") and torch.mps.is_available():
         return torch.device("mps")
     else:
         return torch.device("cpu")
