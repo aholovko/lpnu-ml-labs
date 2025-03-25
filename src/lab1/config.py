@@ -1,5 +1,5 @@
 """
-Configuration file for the Lab1 project.
+Configuration for Lab 1.
 """
 
 # Dataset
@@ -11,9 +11,3 @@ EPOCHS = 5
 LEARNING_RATE = 0.001
 DROPOUT_RATE = 0.5
 SEED = 42
-
-# Environment
-DATA_DIR = "./data"
-MODELS_DIR = "./models"
-REPORTS_DIR = "./reports"
-FIGURES_DIR = "./reports/figures"

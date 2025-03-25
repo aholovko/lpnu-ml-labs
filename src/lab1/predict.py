@@ -1,5 +1,5 @@
 """
-Module for handwriting recognition using trained model.
+Predict handwriting from an image using a trained model.
 """
 
 import argparse
@@ -12,12 +12,11 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from src.lab1.config import MODELS_DIR
-from src.lab1.modeling.model import ConvNet
-from src.lab1.utils import get_device
+from src.lab1.model import ConvNet
+from src.paths import MODELS_DIR
+from src.utils import get_device, setup_logging
 
-logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
-logger = logging.getLogger(__name__)
+logger = setup_logging(logging.INFO)
 
 
 def load_model(model_path: str, device: torch.device) -> torch.nn.Module:
@@ -76,9 +75,7 @@ def predict(model: torch.nn.Module, x: torch.Tensor) -> Tuple[int, float]:
 
 
 def main() -> None:
-    """Run handwriting prediction."""
-
-    parser = argparse.ArgumentParser(description="Predict handwriting")
+    parser = argparse.ArgumentParser(description="Predict handwriting from an image")
     parser.add_argument("--model-name", required=True, help="model name to load")
     parser.add_argument("--image-path", required=True, help="path to the image")
     parser.add_argument("--device", type=str, default=None, help="device to use (default: auto)")

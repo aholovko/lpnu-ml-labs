@@ -1,5 +1,5 @@
 """
-Data module for MNIST dataset.
+Data module for the MNIST dataset.
 """
 
 from pathlib import Path
@@ -10,7 +10,8 @@ import torchvision
 from torch.utils.data import DataLoader, Subset
 from torchvision import transforms
 
-from src.lab1.config import BATCH_SIZE, DATA_DIR, VALID_SIZE
+from src.lab1.config import BATCH_SIZE, VALID_SIZE
+from src.paths import DATA_DIR
 
 
 class MNISTDataModule:

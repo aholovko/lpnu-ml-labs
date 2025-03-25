@@ -6,14 +6,14 @@ IMAGE_PATH ?=
 
 .PHONY: train
 train:
-	@uv run -m src.lab1.modeling.train \
+	@uv run -m src.lab1.train \
 		--epochs $(EPOCHS) \
 		--lr $(LEARNING_RATE) \
 		$(if $(filter-out auto,$(DEVICE)),--device $(DEVICE),)
 
 .PHONY: predict
 predict:
-	@uv run -m src.lab1.modeling.predict \
+	@uv run -m src.lab1.predict \
 		--model-name $(MODEL_NAME) \
 		--image-path $(IMAGE_PATH) \
 		$(if $(filter-out auto,$(DEVICE)),--device $(DEVICE),)
