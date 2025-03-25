@@ -1,5 +1,5 @@
 """
-Module containing model architecture for MNIST classification.
+CNN model for handwriting recognition.
 """
 
 import torch.nn as nn
@@ -9,9 +9,7 @@ from src.lab1.config import DROPOUT_RATE
 
 
 class ConvNet(nn.Module):
-    """
-    CNN model that consists of two convolutional blocks followed by fully connected layers.
-    """
+    """Model that consists of two convolutional blocks followed by fully connected layers."""
 
     def __init__(self):
         super().__init__()

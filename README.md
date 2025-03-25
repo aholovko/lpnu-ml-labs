@@ -12,18 +12,27 @@
 ## Project Structure
 
 ```
-├── data/                   <- Directory for storing datasets
-├── models/                 <- Trained models
+├── data/                     <- Datasets
+├── models/                   <- Trained models
+├── notebooks/                <- Jupyter notebooks
+├── reports/                  <- Generated reports
+│   └── figures/              <- Generated figures
 ├── src/
-│   └── lab1/               <- Source code for lab1
-│       ├── config.py         <- Configuration settings
+│   ├── paths.py              <- Path definitions
+│   ├── trainer.py            <- Trainer class
+│   ├── utils.py              <- Utility functions
+│   └── lab1/
+│       ├── config.py         <- Options for model training
 │       ├── dataset_mnist.py  <- Data module for MNIST dataset
-│       ├── utils.py          <- Utility functions
-│       ├── modeling/         <- Model training and inference
-│       │   ├── model.py        <- Model definition
-│       │   ├── train.py        <- Model training and evaluation
-│       │   └── predict.py      <- Model inference
-└── README.md           <- This file
+│       ├── model.py          <- Model definition
+│       ├── predict.py        <- Model inference
+│       └── train.py          <- Model training
+├── tests/                    <- Unit tests
+├── LICENSE
+├── Makefile
+├── pyproject.toml
+├── README.md
+└── uv.lock
 ```
 
 ## Getting Started
@@ -61,7 +70,7 @@ make train
 ```
 or
 ```bash
-python -m src.lab1.modeling.train
+python -m src.lab1.train
 ```
 
 Customize training parameters:
@@ -71,7 +80,7 @@ make train EPOCHS=10 LEARNING_RATE=0.0005 DEVICE=cuda
 ```
 or
 ```bash
-python -m src.lab1.modeling.train --epochs 10 --lr 0.0005 --device cuda
+python -m src.lab1.train --epochs 10 --lr 0.0005 --device cuda
 ```
 
 ### Make Predictions
@@ -83,7 +92,7 @@ make predict MODEL_NAME=model_name IMAGE_PATH=path/to/image.jpg
 ```
 or
 ```bash
-python -m src.lab1.modeling.predict --model-name model_name --image-path path/to/image.jpg
+python -m src.lab1.predict --model-name model_name --image-path path/to/image.jpg
 ```
 
 > **Note**: `MODEL_NAME` should be the filename (without extension) of a model file located in the `./models/` directory.
@@ -117,6 +126,12 @@ make test
 or
 ```bash
 python -m pytest tests/ -v
+```
+
+### Run Jupyter Notebook
+
+```bash
+uv run --with jupyter jupyter lab
 ```
 
 ## Contributing
