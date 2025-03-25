@@ -119,6 +119,12 @@ or
 python -m pytest tests/ -v
 ```
 
+### Run Jupyter Notebook
+
+```bash
+uv run --with jupyter jupyter lab
+```
+
 ## Contributing
 
 Please feel free to submit a Pull Request.
