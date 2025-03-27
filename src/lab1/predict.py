@@ -12,6 +12,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+from src.lab1.dataset_mnist import MNIST_MEAN, MNIST_STD
 from src.lab1.model import ConvNet
 from src.paths import MODELS_DIR
 from src.utils import get_device, setup_logging
@@ -68,11 +69,12 @@ def preprocess_image(image: np.ndarray, device: torch.device) -> torch.Tensor:
     m = cv2.moments(digit)
     if abs(m["mu02"]) >= 1e-2:  # Only deskew if there's significant skew
         skew = m["mu11"] / m["mu02"]
-        M = np.float32([[1, -skew, 0], [0, 1, 0]])
+        transform_matrix = np.array([[1, -skew, 0], [0, 1, 0]], dtype=np.float32)
+        size = (int(w), int(h))
         digit = cv2.warpAffine(
             digit,
-            M,
-            (w, h),
+            transform_matrix,
+            size,
             flags=cv2.WARP_INVERSE_MAP | cv2.INTER_LINEAR,
             borderMode=cv2.BORDER_CONSTANT,
             borderValue=[0],
@@ -108,7 +110,7 @@ def preprocess_image(image: np.ndarray, device: torch.device) -> torch.Tensor:
     tensor = tensor.unsqueeze(0).unsqueeze(0)
 
     # Apply MNIST normalization
-    tensor = (tensor - 0.1307) / 0.3081
+    tensor = (tensor - MNIST_MEAN) / MNIST_STD
 
     return tensor.to(device)
 

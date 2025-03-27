@@ -13,6 +13,10 @@ from torchvision import transforms
 from src.lab1.config import BATCH_SIZE, VALID_SIZE
 from src.paths import DATA_DIR
 
+# MNIST normalization parameters
+MNIST_MEAN = 0.1307
+MNIST_STD = 0.3081
+
 
 class MNISTDataModule:
     """Data module for the MNIST dataset."""
@@ -34,7 +38,9 @@ class MNISTDataModule:
         self.data_dir = data_dir
         self.batch_size = batch_size
         self.valid_size = valid_size
-        self.transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean=[0.1307], std=[0.3081])])
+        self.transform = transforms.Compose(
+            [transforms.ToTensor(), transforms.Normalize(mean=[MNIST_MEAN], std=[MNIST_STD])]
+        )
         self.train_dataset: Optional[Subset] = None
         self.valid_dataset: Optional[Subset] = None
         self.test_dataset = None
