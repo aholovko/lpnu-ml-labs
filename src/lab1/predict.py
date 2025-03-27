@@ -12,6 +12,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+from src.lab1.dataset_mnist import MNIST_MEAN, MNIST_STD
 from src.lab1.model import ConvNet
 from src.paths import MODELS_DIR
 from src.utils import get_device, setup_logging
@@ -46,21 +47,74 @@ def load_image(image_path: str) -> np.ndarray:
 
 
 def preprocess_image(image: np.ndarray, device: torch.device) -> torch.Tensor:
-    """Preprocess an image for model inference."""
+    """Preprocess an image for model inference (for model trained on MNIST dataset)."""
 
-    image_size = (28, 28)
-    threshold_block_size = 11
-    threshold_c = 7
+    # Convert to grayscale if needed
+    if image.ndim == 3:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-    image = cv2.resize(image, image_size, interpolation=cv2.INTER_LANCZOS4)
-    image = cv2.adaptiveThreshold(
-        image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, threshold_block_size, threshold_c
-    )
-    image = cv2.bitwise_not(image)
-    image = image.astype(np.float32) / 255.0
+    # Binarize image (digit: white [255], background: black [0])
+    _, binary = cv2.threshold(image, 128, 255, cv2.THRESH_BINARY_INV)
 
-    x_tensor = torch.from_numpy(image).float()
-    return x_tensor.unsqueeze(0).to(device)
+    # Find contours and select the largest one
+    contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if not contours:
+        return torch.zeros((1, 1, 28, 28), dtype=torch.float32).to(device)
+
+    # Extract the digit
+    x, y, w, h = cv2.boundingRect(max(contours, key=cv2.contourArea))
+    digit = binary[y : y + h, x : x + w]
+
+    # Deskew the digit
+    m = cv2.moments(digit)
+    if abs(m["mu02"]) >= 1e-2:  # Only deskew if there's significant skew
+        skew = m["mu11"] / m["mu02"]
+        transform_matrix = np.array([[1, -skew, 0], [0, 1, 0]], dtype=np.float32)
+        size = (int(w), int(h))
+        digit = cv2.warpAffine(
+            digit,
+            transform_matrix,
+            size,
+            flags=cv2.WARP_INVERSE_MAP | cv2.INTER_LINEAR,
+            borderMode=cv2.BORDER_CONSTANT,
+            borderValue=[0],
+        )
+
+    # Enhance thin strokes with dilation
+    kernel = np.ones((2, 2), np.uint8)
+    digit = cv2.dilate(digit, kernel, iterations=1)
+
+    # Recompute bounding box after modifications
+    contours, _ = cv2.findContours(digit, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if contours:
+        x, y, w, h = cv2.boundingRect(max(contours, key=cv2.contourArea))
+        digit = digit[y : y + h, x : x + w]
+    else:
+        return torch.zeros((1, 1, 28, 28), dtype=torch.float32).to(device)
+
+    # Ensure the digit has valid dimensions
+    if w <= 0 or h <= 0:
+        return torch.zeros((1, 1, 28, 28), dtype=torch.float32).to(device)
+
+    # Resize to fit in 20x20 box (with 4px margin in a 28x28 image)
+    scale = 20.0 / max(w, h)
+    new_w, new_h = int(w * scale), int(h * scale)
+    digit_resized = cv2.resize(digit, (new_w, new_h), interpolation=cv2.INTER_AREA)
+
+    # Center in a 28x28 image
+    canvas = np.zeros((28, 28), dtype=np.uint8)
+    x_offset = (28 - new_w) // 2
+    y_offset = (28 - new_h) // 2
+    canvas[y_offset : y_offset + new_h, x_offset : x_offset + new_w] = digit_resized
+
+    # Convert to normalized tensor and move to device
+    tensor = torch.from_numpy(canvas.astype(np.float32) / 255.0)
+    tensor = tensor.unsqueeze(0).unsqueeze(0)
+
+    # Apply MNIST normalization
+    tensor = (tensor - MNIST_MEAN) / MNIST_STD
+
+    return tensor.to(device)
 
 
 def predict(model: torch.nn.Module, x: torch.Tensor) -> Tuple[int, float]:
