@@ -89,6 +89,8 @@ def preprocess_image(image: np.ndarray, device: torch.device) -> torch.Tensor:
     if contours:
         x, y, w, h = cv2.boundingRect(max(contours, key=cv2.contourArea))
         digit = digit[y : y + h, x : x + w]
+    else:
+        return torch.zeros((1, 1, 28, 28), dtype=torch.float32).to(device)
 
     # Ensure the digit has valid dimensions
     if w <= 0 or h <= 0:
