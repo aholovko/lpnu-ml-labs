@@ -37,18 +37,23 @@ Resources:
 
 import logging
 import os
+import shutil
+import zipfile
 from urllib import request
 
 from torch.utils.data import Dataset
+from tqdm import tqdm
 
 from src.paths import DATA_DIR
 from src.utils import setup_logging
 
 logger = setup_logging(logging.INFO)
 
-AUDIO_MNIST_BASE_URL = "https://raw.githubusercontent.com/soerenab/AudioMNIST/refs/heads/master/data/"
+
+AUDIO_MNIST_ZIP_URL = "https://github.com/soerenab/AudioMNIST/archive/refs/heads/master.zip"
 AUDIO_MNIST_META_FILE = "audioMNIST_meta.txt"
-AUDIO_MNIST_DIR = os.path.join(DATA_DIR, "AUDIOMNIST", "raw")
+AUDIO_MNIST_DIR = os.path.join(DATA_DIR, "AUDIOMNIST")
+AUDIO_MNIST_RAW_DIR = os.path.join(AUDIO_MNIST_DIR, "raw")
 
 
 class AudioMNISTDataset(Dataset):
@@ -69,33 +74,41 @@ class AudioMNISTDataset(Dataset):
 
         os.makedirs(AUDIO_MNIST_DIR, exist_ok=True)
 
-        try:
-            request.urlretrieve(AUDIO_MNIST_BASE_URL + AUDIO_MNIST_META_FILE, meta_file_path)
-            logger.info(f"Downloaded metadata to {meta_file_path}")
-        except Exception as e:
-            logger.error(f"Failed to download metadata: {e}")
-            return False
+        zip_path = os.path.join(AUDIO_MNIST_DIR, "audiomnist.zip")
+        logger.info(f"Downloading AudioMNIST archive from {AUDIO_MNIST_ZIP_URL}")
 
-        for speaker_id in range(1, 61):
-            speaker_id_padded = f"{speaker_id:02d}"
-            speaker_dir = os.path.join(AUDIO_MNIST_DIR, speaker_id_padded)
-            os.makedirs(speaker_dir, exist_ok=True)
+        with tqdm(unit="B", unit_scale=True, miniters=1, desc="AudioMNIST") as progress_bar:
 
-            for digit in range(10):
-                for repetition in range(50):
-                    filename = f"{digit}_{speaker_id_padded}_{repetition}.wav"
-                    file_url = f"{AUDIO_MNIST_BASE_URL}{speaker_id_padded}/{filename}"
-                    file_path = os.path.join(speaker_dir, filename)
+            def update_progress(count, block_size, total_size):
+                if total_size is not None:
+                    progress_bar.total = total_size
+                progress_bar.update(block_size)
 
-                    if os.path.exists(file_path):
-                        continue
+            request.urlretrieve(AUDIO_MNIST_ZIP_URL, filename=zip_path, reporthook=update_progress)
 
-                    try:
-                        request.urlretrieve(file_url, file_path)
-                        logger.info(f"Downloaded {file_path}")
-                    except Exception as e:
-                        logger.warning(f"Failed to download {file_url}: {e}")
-                        continue
+        logger.info(f"Extracting archive to {AUDIO_MNIST_DIR}")
+        with zipfile.ZipFile(zip_path, "r") as zip_ref:
+            zip_ref.extractall(AUDIO_MNIST_DIR)
+
+        extracted_dir = os.path.join(AUDIO_MNIST_DIR, "AudioMNIST-master")
+        extracted_data_dir = os.path.join(extracted_dir, "data")
+
+        os.makedirs(AUDIO_MNIST_RAW_DIR, exist_ok=True)
+
+        for item in os.listdir(extracted_data_dir):
+            src_path = os.path.join(extracted_data_dir, item)
+            dst_path = os.path.join(AUDIO_MNIST_RAW_DIR, item)
+
+            if os.path.isdir(src_path) or item == AUDIO_MNIST_META_FILE:
+                if os.path.exists(dst_path):
+                    if os.path.isdir(dst_path):
+                        shutil.rmtree(dst_path)
+                    else:
+                        os.remove(dst_path)
+                shutil.move(src_path, dst_path)
+
+        shutil.rmtree(extracted_dir)
+        os.remove(zip_path)
 
         logger.info(f"Finished downloading AudioMNIST dataset to {AUDIO_MNIST_DIR}")
         return True
