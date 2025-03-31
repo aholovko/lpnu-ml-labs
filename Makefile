@@ -3,10 +3,11 @@ LEARNING_RATE ?= 0.001
 DEVICE ?= auto
 MODEL_NAME ?=
 IMAGE_PATH ?=
+LAB ?= 2
 
 .PHONY: train
 train:
-	@uv run -m src.lab1.train \
+	@uv run -m src.lab$(LAB).train \
 		--epochs $(EPOCHS) \
 		--lr $(LEARNING_RATE) \
 		$(if $(filter-out auto,$(DEVICE)),--device $(DEVICE),)
