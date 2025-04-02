@@ -2,14 +2,14 @@
 AudioMNIST Dataset
 
 A spoken digits dataset consisting of 30,000 audio samples of digits (0-9) recorded by
-60 different speakers (30 female, 30 male). Each speaker contributed 50 recordings of
+60 different speakers (12 female/48 male). Each speaker contributed 50 recordings of
 each digit, resulting in a balanced dataset (500 recordings per speaker).
 
 Dataset Structure:
 - 10 digits (0-9)
 - 60 speakers (labeled 01-60)
 - 50 recordings per digit per speaker (labeled 0-49)
-- Audio format: WAV files (8kHz, mono, 16-bit)
+- Audio format: WAV files (48 kHz, mono, 16-bit)
 
 File Naming Convention:
 - Files are stored in folders named with zero-padded speaker id (e.g., "01" for speaker 1)
@@ -39,11 +39,15 @@ import logging
 import os
 import shutil
 import zipfile
+from typing import Tuple
 from urllib import request
 
-from torch.utils.data import Dataset
+import torch
+import torchaudio
+from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 
+from src.lab2.config import BATCH_SIZE, SAMPLE_RATE
 from src.paths import DATA_DIR
 from src.utils import setup_logging
 
@@ -59,7 +63,9 @@ AUDIO_MNIST_RAW_DIR = os.path.join(AUDIO_MNIST_DIR, "raw")
 class AudioMNISTDataset(Dataset):
     """AudioMNIST dataset."""
 
-    def __init__(self, download: bool = True):
+    def __init__(self, download: bool = True, num_samples: int = SAMPLE_RATE):
+        self.num_samples = num_samples
+
         if download:
             self._download_dataset_if_needed()
 
@@ -114,10 +120,102 @@ class AudioMNISTDataset(Dataset):
         return True
 
     def _load_data(self) -> None:
-        pass
+        self.audio_files = []
+        self.labels = []
+
+        # Iterate through speaker directories (01-60)
+        for speaker_id in range(1, 61):
+            speaker_dir = os.path.join(AUDIO_MNIST_RAW_DIR, f"{speaker_id:02d}")
+
+            if not os.path.exists(speaker_dir):
+                continue
+
+            # Get all digit recordings for the current speaker
+            for digit in range(10):
+                for repetition in range(50):
+                    filename = f"{digit}_{speaker_id:02d}_{repetition}.wav"
+                    file_path = os.path.join(speaker_dir, filename)
+
+                    if os.path.exists(file_path):
+                        self.audio_files.append(file_path)
+                        self.labels.append(digit)
+
+        logger.info(f"Loaded {len(self.audio_files)} audio samples")
+
+    def __len__(self) -> int:
+        """Return the number of samples in the dataset."""
+        return len(self.audio_files)
+
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, int]:
+        """Get an audio sample and its label by index."""
+        file_path = self.audio_files[idx]
+        label = self.labels[idx]
+
+        if not os.path.isabs(file_path):
+            file_path = os.path.abspath(file_path)
+
+        signal, sr = torchaudio.load(file_path, backend="soundfile")
+        # signal = signal.to("mps")
+        signal = self._cut_if_necessary(signal)
+        signal = self._right_pad_if_necessary(signal)
+
+        return signal, label
+
+    def _cut_if_necessary(self, signal):
+        if signal.shape[1] > self.num_samples:
+            signal = signal[:, : self.num_samples]
+        return signal
+
+    def _right_pad_if_necessary(self, signal):
+        length_signal = signal.shape[1]
+        if length_signal < self.num_samples:
+            num_missing_samples = self.num_samples - length_signal
+            last_dim_padding = (0, num_missing_samples)
+            signal = torch.nn.functional.pad(signal, last_dim_padding)
+        return signal
+
+
+class DataSubset(Dataset):
+    def __init__(self, dataset, indices, transform=None):
+        self.dataset = dataset
+        self.indices = indices
+        self.transform = transform
 
     def __len__(self):
-        pass
+        return len(self.indices)
 
-    def __getitem__(self, idx: int):
-        pass
+    def __getitem__(self, idx):
+        waveform, label = self.dataset[self.indices[idx]]
+        if self.transform:
+            waveform = self.transform(waveform)
+        return waveform, label
+
+
+def create_audio_mnist_dataloaders(
+    valid_size: int = 4500, test_size: int = 4500, download: bool = True, transform=None, num_workers: int = 4
+):
+    """
+    Create data loaders for the AudioMNIST dataset.
+      - Training set: 70% (21,000 recordings)
+      - Validation set: 15% (4,500 recordings)
+      - Test set: 15% (4,500 recordings)
+    """
+    dataset = AudioMNISTDataset(download=download)
+
+    dataset_size = len(dataset)
+    train_size = dataset_size - valid_size - test_size
+
+    indices = torch.randperm(dataset_size, generator=torch.Generator()).tolist()
+    train_indices = indices[:train_size]
+    val_indices = indices[train_size : train_size + valid_size]
+    test_indices = indices[train_size + valid_size :]
+
+    train_dataset = DataSubset(dataset, train_indices, transform)
+    val_dataset = DataSubset(dataset, val_indices, transform)
+    test_dataset = DataSubset(dataset, test_indices, transform)
+
+    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=num_workers)
+    val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=num_workers)
+    test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=num_workers)
+
+    return train_loader, val_loader, test_loader

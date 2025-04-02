@@ -2,11 +2,22 @@
 Train and evaluate a model for speech recognition.
 """
 
+import datetime
 import logging
+import os
 from argparse import ArgumentParser
 
-from src.lab2.config import SEED
-from src.lab2.dataset_audio_mnist import AudioMNISTDataset
+import torch
+import torchaudio.transforms as T
+
+from src.lab2.config import SAMPLE_RATE, SEED
+from src.lab2.dataset_audio_mnist import create_audio_mnist_dataloaders
+from src.lab2.model import Net
+from src.paths import (
+    FIGURES_DIR,
+    MODELS_DIR,
+)
+from src.trainer import Trainer, plot_training_metrics
 from src.utils import set_seed, setup_logging
 
 logger = setup_logging(logging.INFO)
@@ -30,7 +41,43 @@ def main() -> None:
     set_seed(SEED)
 
     # Prepare data
-    _ = AudioMNISTDataset(download=True)
+    transform = torch.nn.Sequential(
+        T.MelSpectrogram(sample_rate=SAMPLE_RATE, n_fft=1024, hop_length=512, n_mels=64),
+        T.AmplitudeToDB(stype="power", top_db=80),
+    )
+
+    train_loader, val_loader, test_loader = create_audio_mnist_dataloaders(
+        valid_size=4500,
+        test_size=4500,
+        download=False,
+        transform=transform,
+    )
+
+    logger.info(f"Train samples (batches): {len(train_loader)}")
+    logger.info(f"Validation samples (batches): {len(val_loader)}")
+    logger.info(f"Test samples (batches): {len(test_loader)}")
+
+    # Create model and trainer
+    model = Net()
+    loss_fn = torch.nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    trainer = Trainer(model, loss_fn, optimizer, args.device)
+
+    # Generate model name
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    model_name = f"audio_mnist_classifier_{timestamp}"
+
+    # Train model
+    logger.info(f"Starting training for {args.epochs} epochs...")
+    metrics = trainer.train(train_loader, val_loader, args.epochs)
+
+    # Save model
+    model_path = os.path.join(MODELS_DIR, f"{model_name}.pt")
+    trainer.save_model(path=model_path)
+
+    # Plot loss and accuracy graphs
+    plot_path = os.path.join(FIGURES_DIR, f"training_{model_name}.png")
+    plot_training_metrics(metrics, save_path=plot_path)
 
 
 if __name__ == "__main__":
