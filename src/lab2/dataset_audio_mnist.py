@@ -39,6 +39,7 @@ import logging
 import os
 import shutil
 import zipfile
+from pathlib import Path
 from typing import Tuple
 from urllib import request
 
@@ -56,8 +57,8 @@ logger = setup_logging(logging.INFO)
 
 AUDIO_MNIST_ZIP_URL = "https://github.com/soerenab/AudioMNIST/archive/refs/heads/master.zip"
 AUDIO_MNIST_META_FILE = "audioMNIST_meta.txt"
-AUDIO_MNIST_DIR = os.path.join(DATA_DIR, "AUDIOMNIST")
-AUDIO_MNIST_RAW_DIR = os.path.join(AUDIO_MNIST_DIR, "raw")
+AUDIO_MNIST_DIR = DATA_DIR / "AUDIOMNIST"
+AUDIO_MNIST_RAW_DIR = AUDIO_MNIST_DIR / "raw"
 
 
 class AudioMNISTDataset(Dataset):
@@ -73,14 +74,14 @@ class AudioMNISTDataset(Dataset):
 
     @staticmethod
     def _download_dataset_if_needed() -> bool:
-        meta_file_path = os.path.join(AUDIO_MNIST_DIR, AUDIO_MNIST_META_FILE)
+        meta_file_path = AUDIO_MNIST_DIR / AUDIO_MNIST_META_FILE
 
-        if os.path.exists(meta_file_path):
+        if meta_file_path.exists():
             return True
 
         os.makedirs(AUDIO_MNIST_DIR, exist_ok=True)
 
-        zip_path = os.path.join(AUDIO_MNIST_DIR, "audiomnist.zip")
+        zip_path = AUDIO_MNIST_DIR / "audiomnist.zip"
         logger.info(f"Downloading AudioMNIST archive from {AUDIO_MNIST_ZIP_URL}")
 
         with tqdm(unit="B", unit_scale=True, miniters=1, desc="AudioMNIST") as progress_bar:
@@ -96,22 +97,22 @@ class AudioMNISTDataset(Dataset):
         with zipfile.ZipFile(zip_path, "r") as zip_ref:
             zip_ref.extractall(AUDIO_MNIST_DIR)
 
-        extracted_dir = os.path.join(AUDIO_MNIST_DIR, "AudioMNIST-master")
-        extracted_data_dir = os.path.join(extracted_dir, "data")
+        extracted_dir = AUDIO_MNIST_DIR / "AudioMNIST-master"
+        extracted_data_dir = extracted_dir / "data"
 
         os.makedirs(AUDIO_MNIST_RAW_DIR, exist_ok=True)
 
         for item in os.listdir(extracted_data_dir):
-            src_path = os.path.join(extracted_data_dir, item)
-            dst_path = os.path.join(AUDIO_MNIST_RAW_DIR, item)
+            src_path = extracted_data_dir / item
+            dst_path = AUDIO_MNIST_RAW_DIR / item
 
-            if os.path.isdir(src_path) or item == AUDIO_MNIST_META_FILE:
-                if os.path.exists(dst_path):
-                    if os.path.isdir(dst_path):
+            if src_path.is_dir() or item == AUDIO_MNIST_META_FILE:
+                if dst_path.exists():
+                    if dst_path.is_dir():
                         shutil.rmtree(dst_path)
                     else:
                         os.remove(dst_path)
-                shutil.move(src_path, dst_path)
+                shutil.move(str(src_path), str(dst_path))
 
         shutil.rmtree(extracted_dir)
         os.remove(zip_path)
@@ -125,18 +126,18 @@ class AudioMNISTDataset(Dataset):
 
         # Iterate through speaker directories (01-60)
         for speaker_id in range(1, 61):
-            speaker_dir = os.path.join(AUDIO_MNIST_RAW_DIR, f"{speaker_id:02d}")
+            speaker_dir = AUDIO_MNIST_RAW_DIR / f"{speaker_id:02d}"
 
-            if not os.path.exists(speaker_dir):
+            if not speaker_dir.exists():
                 continue
 
             # Get all digit recordings for the current speaker
             for digit in range(10):
                 for repetition in range(50):
                     filename = f"{digit}_{speaker_id:02d}_{repetition}.wav"
-                    file_path = os.path.join(speaker_dir, filename)
+                    file_path = speaker_dir / filename
 
-                    if os.path.exists(file_path):
+                    if file_path.exists():
                         self.audio_files.append(file_path)
                         self.labels.append(digit)
 
@@ -151,8 +152,8 @@ class AudioMNISTDataset(Dataset):
         file_path = self.audio_files[idx]
         label = self.labels[idx]
 
-        if not os.path.isabs(file_path):
-            file_path = os.path.abspath(file_path)
+        if not isinstance(file_path, Path):
+            file_path = Path(file_path)
 
         signal, sr = torchaudio.load(file_path, backend="soundfile")
         # signal = signal.to("mps")

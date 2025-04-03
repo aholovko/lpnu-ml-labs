@@ -23,7 +23,7 @@ class MNISTDataModule:
 
     def __init__(
         self,
-        data_dir: Path = Path(DATA_DIR),
+        data_dir: Path = DATA_DIR,
         batch_size: int = BATCH_SIZE,
         valid_size: int = VALID_SIZE,
     ):

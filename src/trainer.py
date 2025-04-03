@@ -249,7 +249,8 @@ def plot_training_metrics(
     plt.tight_layout()
 
     if save_path:
-        plt.savefig(save_path, dpi=dpi)
+        save_path_str = str(save_path) if isinstance(save_path, Path) else save_path
+        plt.savefig(save_path_str, dpi=dpi)
         logger.info(f"Training graphs saved to {save_path}")
 
     return fig
