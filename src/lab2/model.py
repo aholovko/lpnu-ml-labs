@@ -3,10 +3,13 @@ CNN model for Audio MNIST speech recognition.
 Architecture: 4 conv blocks → flatten → linear → 10 digit classes
 """
 
+import torch
 import torch.nn as nn
 
+from src.model import BaseModel
 
-class Net(nn.Module):
+
+class Net(BaseModel):
     def __init__(self, num_classes=10):
         super().__init__()
 
@@ -33,7 +36,7 @@ class Net(nn.Module):
         # Classification head
         self.classifier = nn.Sequential(nn.Flatten(), nn.Linear(4480, num_classes))
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Forward pass through the network
 

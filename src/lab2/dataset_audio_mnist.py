@@ -192,31 +192,79 @@ class DataSubset(Dataset):
         return waveform, label
 
 
-def create_audio_mnist_dataloaders(
-    valid_size: int = 4500, test_size: int = 4500, download: bool = True, transform=None, num_workers: int = 4
-):
-    """
-    Create data loaders for the AudioMNIST dataset.
-      - Training set: 70% (21,000 recordings)
-      - Validation set: 15% (4,500 recordings)
-      - Test set: 15% (4,500 recordings)
-    """
-    dataset = AudioMNISTDataset(download=download)
+class AudioMNISTDataModule:
+    """Data module for the AudioMNIST dataset."""
 
-    dataset_size = len(dataset)
-    train_size = dataset_size - valid_size - test_size
+    def __init__(
+        self,
+        data_dir: Path = DATA_DIR,
+        batch_size: int = BATCH_SIZE,
+        valid_size: int = 4500,
+        test_size: int = 4500,
+        transform=None,
+        num_workers: int = 4,
+        download: bool = True,
+    ):
+        """Initialize the AudioMNIST data module.
 
-    indices = torch.randperm(dataset_size, generator=torch.Generator()).tolist()
-    train_indices = indices[:train_size]
-    val_indices = indices[train_size : train_size + valid_size]
-    test_indices = indices[train_size + valid_size :]
+        Args:
+            data_dir: Directory where the dataset will be stored
+            batch_size: Batch size for dataloaders
+            valid_size: Number of samples to use for validation
+            test_size: Number of samples to use for test
+            transform: Optional transform to apply to the data
+            num_workers: Number of workers for data loading
+            download: Whether to download the dataset if not found
+        """
+        self.data_dir = data_dir
+        self.batch_size = batch_size
+        self.valid_size = valid_size
+        self.test_size = test_size
+        self.transform = transform
+        self.num_workers = num_workers
+        self.download = download
+        self.train_dataset = None
+        self.valid_dataset = None
+        self.test_dataset = None
+        self.dataset = None
 
-    train_dataset = DataSubset(dataset, train_indices, transform)
-    val_dataset = DataSubset(dataset, val_indices, transform)
-    test_dataset = DataSubset(dataset, test_indices, transform)
+    def prepare_data(self) -> None:
+        """Download or prepare the AudioMNIST dataset."""
+        if self.download:
+            # Create the dataset which will trigger download if needed
+            AudioMNISTDataset(download=True)
 
-    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=num_workers)
-    val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=num_workers)
-    test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=num_workers)
+    def setup(self) -> None:
+        """Setup train, validation, and test datasets."""
+        self.dataset = AudioMNISTDataset(download=False)
 
-    return train_loader, val_loader, test_loader
+        # Create splits
+        dataset_size = len(self.dataset)
+        train_size = dataset_size - self.valid_size - self.test_size
+
+        indices = torch.randperm(dataset_size, generator=torch.Generator()).tolist()
+        train_indices = indices[:train_size]
+        val_indices = indices[train_size : train_size + self.valid_size]
+        test_indices = indices[train_size + self.valid_size :]
+
+        self.train_dataset = DataSubset(self.dataset, train_indices, self.transform)
+        self.valid_dataset = DataSubset(self.dataset, val_indices, self.transform)
+        self.test_dataset = DataSubset(self.dataset, test_indices, self.transform)
+
+    def train_dataloader(self) -> DataLoader:
+        """Get the training dataloader."""
+        if self.train_dataset is None:
+            raise ValueError("Call setup() before accessing dataloaders")
+        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
+
+    def val_dataloader(self) -> DataLoader:
+        """Get the validation dataloader."""
+        if self.valid_dataset is None:
+            raise ValueError("Call setup() before accessing dataloaders")
+        return DataLoader(self.valid_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
+
+    def test_dataloader(self) -> DataLoader:
+        """Get the test dataloader."""
+        if self.test_dataset is None:
+            raise ValueError("Call setup() before accessing dataloaders")
+        return DataLoader(self.test_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)

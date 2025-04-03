@@ -10,7 +10,7 @@ import torch
 import torchaudio.transforms as T
 
 from src.lab2.config import SAMPLE_RATE, SEED
-from src.lab2.dataset_audio_mnist import create_audio_mnist_dataloaders
+from src.lab2.dataset_audio_mnist import AudioMNISTDataModule
 from src.lab2.model import Net
 from src.paths import (
     FIGURES_DIR,
@@ -45,16 +45,22 @@ def main() -> None:
         T.AmplitudeToDB(stype="power", top_db=80),
     )
 
-    train_loader, val_loader, test_loader = create_audio_mnist_dataloaders(
+    data_module = AudioMNISTDataModule(
         valid_size=4500,
         test_size=4500,
         download=False,
         transform=transform,
     )
+    data_module.prepare_data()
+    data_module.setup()
 
-    logger.info(f"Train samples (batches): {len(train_loader)}")
-    logger.info(f"Validation samples (batches): {len(val_loader)}")
-    logger.info(f"Test samples (batches): {len(test_loader)}")
+    train_loader = data_module.train_dataloader()
+    val_loader = data_module.val_dataloader()
+    test_loader = data_module.test_dataloader()
+
+    logger.info(f"Train batches: {len(train_loader)}")
+    logger.info(f"Validation batches: {len(val_loader)}")
+    logger.info(f"Test batches: {len(test_loader)}")
 
     # Create model and trainer
     model = Net()
