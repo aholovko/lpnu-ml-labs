@@ -3,6 +3,7 @@ LEARNING_RATE ?= 0.001
 DEVICE ?= auto
 MODEL_NAME ?=
 IMAGE_PATH ?=
+AUDIO_PATH ?=
 LAB ?= 1
 
 .PHONY: train
@@ -14,10 +15,17 @@ train:
 
 .PHONY: predict
 predict:
+ifeq ($(LAB), 1)
 	@uv run -m src.lab1.predict \
 		--model-name $(MODEL_NAME) \
 		--image-path $(IMAGE_PATH) \
 		$(if $(filter-out auto,$(DEVICE)),--device $(DEVICE),)
+else ifeq ($(LAB), 2)
+	@uv run -m src.lab2.predict \
+		--model-name $(MODEL_NAME) \
+		--audio-path $(AUDIO_PATH) \
+		$(if $(filter-out auto,$(DEVICE)),--device $(DEVICE),)
+endif
 
 .PHONY: test
 test:

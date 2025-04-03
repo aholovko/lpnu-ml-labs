@@ -109,12 +109,24 @@ python -m src.lab1.train --epochs 10 --lr 0.0005 --device cuda
 
 Generate predictions using a trained model:
 
+#### Lab 1 (MNIST Digit Recognition):
+
 ```bash
 make predict LAB=1 MODEL_NAME=model_name IMAGE_PATH=path/to/image.jpg
 ```
 or
 ```bash
 python -m src.lab1.predict --model-name model_name --image-path path/to/image.jpg
+```
+
+#### Lab 2 (Audio MNIST):
+
+```bash
+make predict LAB=2 MODEL_NAME=model_name AUDIO_PATH=path/to/audio.wav
+```
+or
+```bash
+python -m src.lab2.predict --model-name model_name --audio-path path/to/audio.wav
 ```
 
 > **Note**: `MODEL_NAME` should be the filename (without extension) of a model file located in the `./models/` directory.
