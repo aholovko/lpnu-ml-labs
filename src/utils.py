@@ -11,15 +11,44 @@ import numpy as np
 import torch
 
 
-def setup_logging(log_level: int = logging.INFO) -> logging.Logger:
-    """Configure logging for console output."""
-    logging.basicConfig(level=log_level, format="[%(levelname)s] %(message)s", handlers=[logging.StreamHandler()])
+def setup_logging(
+    name: Optional[str] = None,
+    log_level: int = logging.INFO,
+    log_format: Optional[str] = None,
+) -> logging.Logger:
+    """
+    Configure and retrieve a logger with specified settings.
 
-    return logging.getLogger(__name__)
+    Args:
+        name: Logger name (typically __name__ of the calling module)
+        log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        log_format: Custom log format string
+
+    Returns:
+        Configured logger instance
+    """
+    # Default format includes timestamp for better traceability
+    if log_format is None:
+        log_format = "[%(levelname)s] [%(asctime)s] %(message)s"
+
+    # Get logger by name
+    logger_name = name if name else __name__
+    logger = logging.getLogger(logger_name)
+
+    # Only configure root logger once to avoid duplicate handlers
+    if not logging.getLogger().handlers:
+        logging.basicConfig(
+            level=log_level, format=log_format, datefmt="%Y-%m-%d %H:%M:%S", handlers=[logging.StreamHandler()]
+        )
+
+    # Set specific logger level
+    logger.setLevel(log_level)
+
+    return logger
 
 
 # Initialize default logger
-logger = setup_logging()
+logger = setup_logging(__name__)
 
 
 def set_seed(seed: int) -> None:

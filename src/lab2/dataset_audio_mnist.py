@@ -35,7 +35,6 @@ Resources:
 - Example: https://raw.githubusercontent.com/soerenab/AudioMNIST/refs/heads/master/data/01/0_01_0.wav
 """  # noqa: E501
 
-import logging
 import os
 import shutil
 import zipfile
@@ -52,7 +51,7 @@ from src.lab2.config import BATCH_SIZE, SAMPLE_RATE
 from src.paths import DATA_DIR
 from src.utils import setup_logging
 
-logger = setup_logging(logging.INFO)
+logger = setup_logging(__name__)
 
 
 AUDIO_MNIST_ZIP_URL = "https://github.com/soerenab/AudioMNIST/archive/refs/heads/master.zip"

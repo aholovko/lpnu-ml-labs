@@ -10,7 +10,7 @@ import torch
 
 from src.utils import setup_logging
 
-logger = setup_logging()
+logger = setup_logging(__name__)
 
 
 class BaseModel(ABC, torch.nn.Module):
