@@ -3,7 +3,6 @@ Predict handwriting from an image using a trained model.
 """
 
 import argparse
-import logging
 from pathlib import Path
 from typing import Tuple
 
@@ -17,7 +16,7 @@ from src.lab1.model import Net
 from src.paths import MODELS_DIR
 from src.utils import get_device, setup_logging
 
-logger = setup_logging(logging.INFO)
+logger = setup_logging(__name__)
 
 
 def load_model(model_path: str, device: torch.device) -> torch.nn.Module:

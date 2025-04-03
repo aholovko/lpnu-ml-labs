@@ -2,7 +2,6 @@
 Module for training and evaluation of neural network models.
 """
 
-import logging
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
@@ -17,7 +16,7 @@ from torch.utils.data import DataLoader
 
 from src.utils import get_device, setup_logging
 
-logger = setup_logging(logging.INFO)
+logger = setup_logging(__name__)
 
 
 class Trainer:

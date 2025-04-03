@@ -27,7 +27,7 @@ from src.paths import (
 from src.trainer import Trainer, plot_training_metrics
 from src.utils import get_system_info, set_seed, setup_logging
 
-logger = setup_logging(logging.INFO)
+logger = setup_logging(__name__)
 
 
 def main():
@@ -44,7 +44,9 @@ def main():
     )
     args = parser.parse_args()
 
-    logger.setLevel(getattr(logging, args.log_level))
+    # Reconfigure logger with specified log level
+    global logger
+    logger = setup_logging(__name__, getattr(logging, args.log_level))
     set_seed(SEED)
 
     # Prepare data
