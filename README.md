@@ -12,22 +12,32 @@
 ## Project Structure
 
 ```
-├── data/                     <- Datasets
-├── models/                   <- Trained models
-├── notebooks/                <- Jupyter notebooks
-├── reports/                  <- Generated reports
-│   └── figures/              <- Generated figures
+├── data/                          <- Datasets
+├── models/                        <- Trained models
+├── notebooks/                     <- Jupyter notebooks
+├── reports/                       <- Generated reports
+│   └── figures/                   <- Generated figures
 ├── src/
-│   ├── paths.py              <- Path definitions
-│   ├── trainer.py            <- Trainer class
-│   ├── utils.py              <- Utility functions
-│   └── lab1/
-│       ├── config.py         <- Options for model training
-│       ├── dataset_mnist.py  <- Data module for MNIST dataset
-│       ├── model.py          <- Model definition
-│       ├── predict.py        <- Model inference
-│       └── train.py          <- Model training
-├── tests/                    <- Unit tests
+│   ├── __init__.py
+│   ├── datamodule.py              <- Base data module
+│   ├── model.py                   <- Base model class
+│   ├── paths.py                   <- Path definitions
+│   ├── trainer.py                 <- Trainer class
+│   ├── utils.py                   <- Utility functions
+│   ├── lab1/
+│   │   ├── __init__.py
+│   │   ├── config.py              <- Options for model training
+│   │   ├── dataset_mnist.py       <- Data module for MNIST dataset
+│   │   ├── model.py               <- Model definition
+│   │   ├── predict.py             <- Model inference
+│   │   └── train.py               <- Model training
+│   └── lab2/
+│       ├── __init__.py
+│       ├── config.py              <- Options for model training
+│       ├── dataset_audio_mnist.py <- Data module for Audio MNIST dataset
+│       ├── model.py               <- Model definition
+│       └── train.py               <- Model training
+├── tests/                         <- Unit tests
 ├── LICENSE
 ├── Makefile
 ├── pyproject.toml
@@ -63,20 +73,32 @@ source .venv/bin/activate
 
 ### Train the Model
 
-Start model training with default parameters:
+Choose the lab and start model training with default parameters:
+
+#### Lab 1 (MNIST Digit Recognition):
 
 ```bash
-make train
+make train LAB=1
 ```
 or
 ```bash
 python -m src.lab1.train
 ```
 
+#### Lab 2 (Audio MNIST):
+
+```bash
+make train LAB=2
+```
+or
+```bash
+python -m src.lab2.train
+```
+
 Customize training parameters:
 
 ```bash
-make train EPOCHS=10 LEARNING_RATE=0.0005 DEVICE=cuda
+make train LAB=1 EPOCHS=10 LEARNING_RATE=0.0005 DEVICE=cuda
 ```
 or
 ```bash
@@ -88,7 +110,7 @@ python -m src.lab1.train --epochs 10 --lr 0.0005 --device cuda
 Generate predictions using a trained model:
 
 ```bash
-make predict MODEL_NAME=model_name IMAGE_PATH=path/to/image.jpg
+make predict LAB=1 MODEL_NAME=model_name IMAGE_PATH=path/to/image.jpg
 ```
 or
 ```bash
