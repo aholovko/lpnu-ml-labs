@@ -6,8 +6,6 @@ import argparse
 import datetime
 import json
 import logging
-import os
-from pathlib import Path
 
 import torch
 
@@ -50,7 +48,7 @@ def main():
     set_seed(SEED)
 
     # Prepare data
-    data_module = MNISTDataModule(Path(DATA_DIR), BATCH_SIZE, VALID_SIZE)
+    data_module = MNISTDataModule(DATA_DIR, BATCH_SIZE, VALID_SIZE)
     data_module.prepare_data()
     data_module.setup()
 
@@ -69,12 +67,12 @@ def main():
     metrics = trainer.train(data_module.train_dataloader(), data_module.val_dataloader(), args.epochs)
 
     # Save model
-    model_path = os.path.join(MODELS_DIR, f"{model_name}.pt")
-    trainer.save_model(path=model_path)
+    model_path = MODELS_DIR / f"{model_name}.pt"
+    trainer.save_model(path=str(model_path))
 
     # Plot loss and accuracy graphs
-    plot_path = os.path.join(FIGURES_DIR, f"training_{model_name}.png")
-    plot_training_metrics(metrics, save_path=plot_path)
+    plot_path = FIGURES_DIR / f"training_{model_name}.png"
+    plot_training_metrics(metrics, save_path=str(plot_path))
 
     # Evaluate model on test dataset
     test_metrics = trainer.evaluate(data_module.test_dataloader())
@@ -101,7 +99,7 @@ def main():
     }
 
     # Save report
-    json_path = os.path.join(REPORTS_DIR, f"report_{model_name}.json")
+    json_path = REPORTS_DIR / f"report_{model_name}.json"
     try:
         with open(json_path, "w") as f:
             json.dump(report, f, indent=4)

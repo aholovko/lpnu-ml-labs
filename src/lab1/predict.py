@@ -136,8 +136,8 @@ def main() -> None:
     args = parser.parse_args()
 
     device = get_device(args.device)
-    model_path = str(Path(MODELS_DIR) / f"{args.model_name}.pt")
-    model = load_model(model_path, device)
+    model_path = MODELS_DIR / f"{args.model_name}.pt"
+    model = load_model(str(model_path), device)
 
     image = load_image(args.image_path)
     x = preprocess_image(image, device)

@@ -4,7 +4,6 @@ Train and evaluate a model for speech recognition.
 
 import datetime
 import logging
-import os
 from argparse import ArgumentParser
 
 import torch
@@ -72,12 +71,12 @@ def main() -> None:
     metrics = trainer.train(train_loader, val_loader, args.epochs)
 
     # Save model
-    model_path = os.path.join(MODELS_DIR, f"{model_name}.pt")
-    trainer.save_model(path=model_path)
+    model_path = MODELS_DIR / f"{model_name}.pt"
+    trainer.save_model(path=str(model_path))
 
     # Plot loss and accuracy graphs
-    plot_path = os.path.join(FIGURES_DIR, f"training_{model_name}.png")
-    plot_training_metrics(metrics, save_path=plot_path)
+    plot_path = FIGURES_DIR / f"training_{model_name}.png"
+    plot_training_metrics(metrics, save_path=str(plot_path))
 
 
 if __name__ == "__main__":
