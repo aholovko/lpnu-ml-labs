@@ -3,7 +3,7 @@ LEARNING_RATE ?= 0.001
 DEVICE ?= auto
 MODEL_NAME ?=
 IMAGE_PATH ?=
-LAB ?= 2
+LAB ?= 1
 
 .PHONY: train
 train:

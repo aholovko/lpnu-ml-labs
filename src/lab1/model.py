@@ -2,13 +2,15 @@
 CNN model for handwriting recognition.
 """
 
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 from src.lab1.config import DROPOUT_RATE
+from src.model import BaseModel
 
 
-class ConvNet(nn.Module):
+class Net(BaseModel):
     """Model that consists of two convolutional blocks followed by fully connected layers."""
 
     def __init__(self):
@@ -26,7 +28,7 @@ class ConvNet(nn.Module):
         self.dropout = nn.Dropout(p=DROPOUT_RATE)
         self.fc2 = nn.Linear(1024, 10)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         # First block
         x = F.relu(self.conv1(x))  # Use functional ReLU
         x = self.pool(x)

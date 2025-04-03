@@ -13,7 +13,7 @@ import torch
 import torch.nn.functional as F
 
 from src.lab1.dataset_mnist import MNIST_MEAN, MNIST_STD
-from src.lab1.model import ConvNet
+from src.lab1.model import Net
 from src.paths import MODELS_DIR
 from src.utils import get_device, setup_logging
 
@@ -26,7 +26,7 @@ def load_model(model_path: str, device: torch.device) -> torch.nn.Module:
     if not Path(model_path).exists():
         raise FileNotFoundError(f"Model not found: {model_path}")
 
-    model = ConvNet()
+    model = Net()
     model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
     model.to(device).eval()
 

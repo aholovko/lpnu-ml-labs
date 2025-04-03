@@ -17,7 +17,7 @@ from src.lab1.config import (
     VALID_SIZE,
 )
 from src.lab1.dataset_mnist import MNISTDataModule
-from src.lab1.model import ConvNet
+from src.lab1.model import Net
 from src.paths import (
     DATA_DIR,
     FIGURES_DIR,
@@ -53,7 +53,7 @@ def main():
     data_module.setup()
 
     # Create model and trainer
-    model = ConvNet()
+    model = Net()
     loss_fn = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     trainer = Trainer(model, loss_fn, optimizer, args.device)
